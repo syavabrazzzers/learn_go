@@ -30,9 +30,17 @@ func (r *RedisSettings) Url() string {
 	return fmt.Sprintf("%s:%s", r.Host, r.Port)
 }
 
+type SmtpSettings struct {
+	Host     string `env:"SMTP_HOST"`
+	Port     string `env:"SMTP_PORT"`
+	From     string `env:"SMTP_FROM"`
+	Password string `env:"SMTP_PASSWORD"`
+}
+
 type SettingsStruct struct {
 	Postgres  PostgresSettings
 	Redis     RedisSettings
+	Smtp      SmtpSettings
 	JwtSecret string `env:"JWT_SECRET,required"`
 }
 

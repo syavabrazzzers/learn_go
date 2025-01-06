@@ -2,7 +2,9 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"learn/settings"
+	"log"
 
 	redis "github.com/redis/go-redis/v9"
 )
@@ -15,11 +17,38 @@ type RedisClient struct {
 var Client *RedisClient
 
 func (r *RedisClient) Set(key string, value interface{}) {
-	r.client.Set(r.ctx, key, value, 0)
+	result := r.client.Set(r.ctx, key, value, 0)
+	if result.Err() != nil {
+		panic(result.Err())
+	}
+}
+
+func (r *RedisClient) SetJson(key string, value interface{}) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	set_err := r.client.Set(r.ctx, key, data, 0).Err()
+	if set_err != nil {
+		panic(set_err)
+	}
 }
 
 func (r *RedisClient) Get(key string) (string, error) {
 	return r.client.Get(r.ctx, key).Result()
+}
+
+func (r *RedisClient) GetJson(key string) (map[string]string, error) {
+	var result map[string]string
+	jsonStr, err := r.client.Get(r.ctx, key).Result()
+	if err != nil {
+		log.Fatalf("Error getting key: %v", err)
+	}
+	err = json.Unmarshal([]byte(jsonStr), &result)
+	if err != nil {
+		log.Fatalf("JSON Unmarshal error: %v", err)
+	}
+	return result, nil
 }
 
 func MakeClient() {

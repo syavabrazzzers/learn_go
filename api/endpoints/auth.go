@@ -8,9 +8,12 @@ import (
 	"learn/models"
 	"learn/schemas"
 	"learn/utils"
+	"learn/utils/smtp"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	ext_redis "github.com/redis/go-redis/v9"
 	_ "github.com/swaggo/files"       // swagger embed files
 	_ "github.com/swaggo/gin-swagger" // gin-swagger middleware
 	_ "github.com/swaggo/swag"        // swag
@@ -21,6 +24,7 @@ func AddAuth(eng *gin.Engine) {
 	router := eng.Group("/api/auth", middlewares.TransactionMiddleware)
 	router.POST("/login", Login)
 	router.POST("/register", Register)
+	router.POST("/verify", Verify)
 }
 
 // @Schemes	http
@@ -56,7 +60,7 @@ func Login(ctx *gin.Context) {
 // @Accept		json
 // @Produce	json
 // @Param		login	body		schemas.UserCreate	true	"Login request"
-// @Success	200		{object}	schemas.AuthResponseSchema
+// @Success	200		{object}	schemas.AuthVerificationKeySchema
 // @Router		/auth/register [post]
 func Register(ctx *gin.Context) {
 	var newUser models.User
@@ -72,6 +76,35 @@ func Register(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"detail": "User not found"})
 		return
 	}
-	verification_code := utils.MakeVerificationCode()
-	redis.Client.Set(fmt.Sprintf("VC:%s", newUser.Email), verification_code)
+	verification_key := uuid.New().String()
+	verification_code := fmt.Sprint(utils.MakeVerificationCode())
+	go redis.Client.SetJson(verification_key, map[string]string{"email": newUser.Email, "code": verification_code})
+	go smtp.SendMail([]string{newUser.Email}, verification_code, "asd")
+	ctx.JSON(http.StatusOK, schemas.AuthVerificationKeySchema{VerificationKey: verification_key})
+}
+
+// @Schemes	http
+// @Tags		Auth
+// @Accept		json
+// @Produce	json
+// @Param		verification	body	schemas.AuthVerificationSchema true	"Verification data"
+// @Success	200		{object}	schemas.AuthVerificationKeySchema
+// @Router		/auth/verify [post]
+func Verify(ctx *gin.Context) {
+	data, err := utils.GetRequestBody[schemas.AuthVerificationSchema](ctx)
+	if err != nil {
+		return
+	}
+	redis_data, err := redis.Client.GetJson(data.VerificationKey)
+	if errors.Is(err, ext_redis.Nil) {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if data.Code != redis_data["code"] {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]string{"detail": "Invalid code"})
+		return
+	}
+
+	tx := ctx.MustGet("tx").(*gorm.DB)
+	tx.Model(&models.User{}).Where("email = ?", redis_data["email"]).Update("is_active", true)
 }

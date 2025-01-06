@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"learn/models"
 	"math/rand/v2"
+	"net/http"
 
 	settings "learn/settings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -58,4 +60,13 @@ func VerifyJwt(token string) (*jwt.Token, error) {
 
 func MakeVerificationCode() int {
 	return rand.IntN(9999-1000) + 1000
+}
+
+func GetRequestBody[T any](ctx *gin.Context) (*T, error) {
+	var data T
+	if err := ctx.BindJSON(&data); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"detail": "Invalid request body"})
+		return nil, err
+	}
+	return &data, nil
 }

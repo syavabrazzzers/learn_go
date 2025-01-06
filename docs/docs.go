@@ -73,7 +73,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.AuthResponseSchema"
+                            "$ref": "#/definitions/schemas.AuthVerificationKeySchema"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/verify": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "description": "Verification data",
+                        "name": "verification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.AuthVerificationSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.AuthVerificationKeySchema"
                         }
                     }
                 }
@@ -100,6 +132,25 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "access": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.AuthVerificationKeySchema": {
+            "type": "object",
+            "properties": {
+                "verification_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.AuthVerificationSchema": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "verification_key": {
                     "type": "string"
                 }
             }

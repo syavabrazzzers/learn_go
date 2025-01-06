@@ -14,3 +14,12 @@ type RegisterSchema struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
+
+type AuthVerificationKeySchema struct {
+	VerificationKey string `json:"verification_key"`
+}
+
+type AuthVerificationSchema struct {
+	VerificationKey string `json:"verification_key"`
+	Code            string `json:"code"`
+}
