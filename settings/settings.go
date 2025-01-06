@@ -38,25 +38,24 @@ type SmtpSettings struct {
 }
 
 type SettingsStruct struct {
-	Postgres  PostgresSettings
-	Redis     RedisSettings
-	Smtp      SmtpSettings
-	JwtSecret string `env:"JWT_SECRET,required"`
+	Postgres                   PostgresSettings
+	Redis                      RedisSettings
+	Smtp                       SmtpSettings
+	JwtSecret                  string `env:"JWT_SECRET,required"`
+	Debug                      bool   `env:"DEBUG,required"`
+	VerificationCodeExpiration int    `env:"VERIFICATION_CODE_EXP,required"`
 }
 
-func MakeSettings() *SettingsStruct {
+var Settings SettingsStruct
+
+func Init() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("unable to load .env file: %e", err)
 	}
 
-	settings := SettingsStruct{}
-
-	err = env.Parse(&settings)
+	err = env.Parse(&Settings)
 	if err != nil {
 		log.Fatalf("unable to parse ennvironment variables: %e", err)
 	}
-	return &settings
 }
-
-var Settings SettingsStruct

@@ -12,7 +12,12 @@ import (
 var router *gin.Engine
 
 func init() {
-	settings.Settings = *settings.MakeSettings()
+	settings.Init()
+	if settings.Settings.Debug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router = api.ApiInit()
 	db.Init()
 	redis.MakeClient()

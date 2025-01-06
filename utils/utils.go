@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"learn/db/redis"
 	"learn/models"
+	"learn/utils/smtp"
 	"math/rand/v2"
 	"net/http"
 
@@ -11,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -58,9 +61,9 @@ func VerifyJwt(token string) (*jwt.Token, error) {
 	return parsedToken, nil
 }
 
-func MakeVerificationCode() int {
-	return rand.IntN(9999-1000) + 1000
-}
+// func MakeVerificationCode() int {
+// 	return rand.IntN(9999-1000) + 1000
+// }
 
 func GetRequestBody[T any](ctx *gin.Context) (*T, error) {
 	var data T
@@ -69,4 +72,20 @@ func GetRequestBody[T any](ctx *gin.Context) (*T, error) {
 		return nil, err
 	}
 	return &data, nil
+}
+
+func SendVerificationCode(email string) (verification_key string, verification_code string) {
+	verification_key = uuid.New().String()
+	verification_code = fmt.Sprint(rand.IntN(9999-1000) + 1000)
+
+	go redis.Client.SetJson(
+		verification_key,
+		map[string]string{
+			"email": email,
+			"code":  verification_code,
+		},
+		settings.Settings.VerificationCodeExpiration,
+	)
+	go smtp.SendMail([]string{email}, verification_code, "")
+	return
 }

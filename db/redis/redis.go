@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"learn/settings"
 	"log"
+	"time"
 
 	redis "github.com/redis/go-redis/v9"
 )
@@ -23,12 +24,12 @@ func (r *RedisClient) Set(key string, value interface{}) {
 	}
 }
 
-func (r *RedisClient) SetJson(key string, value interface{}) {
+func (r *RedisClient) SetJson(key string, value interface{}, expiration int) {
 	data, err := json.Marshal(value)
 	if err != nil {
 		panic(err)
 	}
-	set_err := r.client.Set(r.ctx, key, data, 0).Err()
+	set_err := r.client.Set(r.ctx, key, data, time.Duration(time.Duration(expiration).Minutes())).Err()
 	if set_err != nil {
 		panic(set_err)
 	}

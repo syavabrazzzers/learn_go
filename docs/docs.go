@@ -47,6 +47,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/recend-verification-code": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "description": "Recend Verification Code",
+                        "name": "RecendVerification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.RecendVerificationSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.AuthVerificationKeySchema"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/register": {
             "post": {
                 "consumes": [
@@ -151,6 +177,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "verification_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.RecendVerificationSchema": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
                     "type": "string"
                 }
             }

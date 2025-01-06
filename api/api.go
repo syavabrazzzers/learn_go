@@ -11,7 +11,11 @@ import (
 )
 
 func ApiInit() *gin.Engine {
-	api := gin.Default()
+	api := gin.New()
+
+	api.Use(gin.Logger())
+
+	api.SetTrustedProxies([]string{"localhost"})
 
 	docs.SwaggerInfo.BasePath = "/api"
 

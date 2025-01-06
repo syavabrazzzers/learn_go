@@ -26,6 +26,13 @@ definitions:
       verification_key:
         type: string
     type: object
+  schemas.RecendVerificationSchema:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   schemas.UserCreate:
     properties:
       email:
@@ -60,6 +67,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/schemas.AuthResponseSchema'
+      tags:
+      - Auth
+  /auth/recend-verification-code:
+    post:
+      parameters:
+      - description: Recend Verification Code
+        in: body
+        name: RecendVerification
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.RecendVerificationSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.AuthVerificationKeySchema'
       tags:
       - Auth
   /auth/register:

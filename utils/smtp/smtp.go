@@ -3,7 +3,6 @@ package smtp
 import (
 	"fmt"
 	"learn/settings"
-	"log"
 	"net/smtp"
 	"strings"
 )
@@ -22,7 +21,6 @@ func SendMail(to []string, code string, template string) {
 	if err != nil {
 		panic(err)
 	}
-	log.Output(0, "Message sent")
 }
 
 // buildEmailMessage constructs the email message with headers and body

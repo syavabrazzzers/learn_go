@@ -14,4 +14,7 @@ db_status:
 	- goose status -env ./.env -dir ./db/migrations
 
 air:
-	air
+	- air
+
+swag:
+	- swag init -g api/api.go

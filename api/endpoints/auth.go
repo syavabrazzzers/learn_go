@@ -8,11 +8,9 @@ import (
 	"learn/models"
 	"learn/schemas"
 	"learn/utils"
-	"learn/utils/smtp"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	ext_redis "github.com/redis/go-redis/v9"
 	_ "github.com/swaggo/files"       // swagger embed files
 	_ "github.com/swaggo/gin-swagger" // gin-swagger middleware
@@ -25,6 +23,7 @@ func AddAuth(eng *gin.Engine) {
 	router.POST("/login", Login)
 	router.POST("/register", Register)
 	router.POST("/verify", Verify)
+	router.POST("/recend-verification-code", RecendVerificationCode)
 }
 
 // @Schemes	http
@@ -76,10 +75,9 @@ func Register(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"detail": "User not found"})
 		return
 	}
-	verification_key := uuid.New().String()
-	verification_code := fmt.Sprint(utils.MakeVerificationCode())
-	go redis.Client.SetJson(verification_key, map[string]string{"email": newUser.Email, "code": verification_code})
-	go smtp.SendMail([]string{newUser.Email}, verification_code, "asd")
+
+	verification_key, _ := utils.SendVerificationCode(newUser.Email)
+
 	ctx.JSON(http.StatusOK, schemas.AuthVerificationKeySchema{VerificationKey: verification_key})
 }
 
@@ -107,4 +105,28 @@ func Verify(ctx *gin.Context) {
 
 	tx := ctx.MustGet("tx").(*gorm.DB)
 	tx.Model(&models.User{}).Where("email = ?", redis_data["email"]).Update("is_active", true)
+}
+
+// @Tags		Auth
+// @Param		RecendVerification	body		schemas.RecendVerificationSchema	true	"Recend Verification Code"
+// @Success	200	{object}	schemas.AuthVerificationKeySchema
+// @Router		/auth/recend-verification-code [post]
+func RecendVerificationCode(ctx *gin.Context) {
+	data, err := utils.GetRequestBody[schemas.RecendVerificationSchema](ctx)
+	if err != nil {
+		return
+	}
+
+	var user models.User
+
+	tx := ctx.MustGet("tx").(*gorm.DB)
+	tx.Model(&models.User{}).Where("email = ?", data.Email).First(&user)
+
+	if user.IsActive {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"detail": "Email already verified"})
+		return
+	}
+
+	verification_key, _ := utils.SendVerificationCode(data.Email)
+	ctx.JSON(http.StatusOK, schemas.AuthVerificationKeySchema{VerificationKey: verification_key})
 }

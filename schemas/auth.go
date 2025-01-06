@@ -23,3 +23,7 @@ type AuthVerificationSchema struct {
 	VerificationKey string `json:"verification_key"`
 	Code            string `json:"code"`
 }
+
+type RecendVerificationSchema struct {
+	Email string `json:"email" binding:"required"`
+}
