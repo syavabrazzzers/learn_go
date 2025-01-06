@@ -37,12 +37,12 @@ func Login(ctx *gin.Context) {
 		return
 	}
 	tx := ctx.MustGet("tx").(*gorm.DB)
-	result := tx.Model(&models.User{}).Where("email = ?", LoginData.EMAIL).First(&user)
+	result := tx.Model(&models.User{}).Where("email = ? and is_active", LoginData.Email).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"detail": "User not found"})
 		return
 	}
-	if !utils.CheckPassword(LoginData.PASSWORD, user.Password) {
+	if !utils.CheckPassword(LoginData.Password, user.Password) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"detail": "Invalid credentials"})
 		return
 	}

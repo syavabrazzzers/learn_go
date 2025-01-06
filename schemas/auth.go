@@ -1,8 +1,8 @@
 package schemas
 
 type AuthRequestSchema struct {
-	EMAIL    string `json:"email" binding:"required"`
-	PASSWORD string `json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type AuthResponseSchema struct {
