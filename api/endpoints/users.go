@@ -3,8 +3,6 @@ package endpoints
 import (
 	"learn/db"
 	"learn/middlewares"
-	"learn/schemas"
-	"learn/utils"
 
 	"github.com/gin-gonic/gin"
 
@@ -14,7 +12,6 @@ import (
 func AddUsers(eng *gin.Engine) {
 	router := eng.Group("/users", middlewares.TransactionMiddleware, middlewares.AuthMiddleware)
 	router.GET("/", GetUsers)
-	router.POST("/", CreateUser)
 	router.DELETE("/", DeleteUser)
 }
 
@@ -28,14 +25,6 @@ func GetUsers(c *gin.Context) {
 	}
 
 	c.JSON(200, users)
-}
-
-func CreateUser(c *gin.Context) {
-	var data schemas.UserCreate
-	c.BindJSON(&data)
-	password_hash := utils.MakePasswordHash(data.Password)
-	user := &models.User{Email: data.Email, Password: password_hash}
-	db.Database.Create(user)
 }
 
 func DeleteUser(c *gin.Context) {

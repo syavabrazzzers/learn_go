@@ -3,6 +3,7 @@ package endpoints
 import (
 	"errors"
 	"fmt"
+	"learn/db/redis"
 	"learn/middlewares"
 	"learn/models"
 	"learn/schemas"
@@ -71,4 +72,6 @@ func Register(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"detail": "User not found"})
 		return
 	}
+	verification_code := utils.MakeVerificationCode()
+	redis.Client.Set(fmt.Sprintf("VC:%s", newUser.Email), verification_code)
 }

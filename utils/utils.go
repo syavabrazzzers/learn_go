@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"learn/models"
+	"math/rand/v2"
 
 	settings "learn/settings"
 	"time"
@@ -53,4 +54,8 @@ func VerifyJwt(token string) (*jwt.Token, error) {
 	}
 
 	return parsedToken, nil
+}
+
+func MakeVerificationCode() int {
+	return rand.IntN(9999-1000) + 1000
 }

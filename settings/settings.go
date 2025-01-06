@@ -20,8 +20,19 @@ func (s *PostgresSettings) PostgresDsn() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", s.Host, s.Port, s.User, s.Password, s.Name)
 }
 
+type RedisSettings struct {
+	Host string `env:"REDIS_HOST,required"`
+	Port string `env:"REDIS_PORT,required"`
+	DB   int    `env:"REDIS_DB,required"`
+}
+
+func (r *RedisSettings) Url() string {
+	return fmt.Sprintf("%s:%s", r.Host, r.Port)
+}
+
 type SettingsStruct struct {
 	Postgres  PostgresSettings
+	Redis     RedisSettings
 	JwtSecret string `env:"JWT_SECRET,required"`
 }
 
