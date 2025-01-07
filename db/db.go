@@ -14,7 +14,7 @@ type DBManager struct {
 
 var Database *gorm.DB
 
-func Init() {
+func init() {
 	db, err := gorm.Open(postgres.Open(settings.Settings.Postgres.PostgresDsn()), &gorm.Config{})
 	if err != nil {
 		fmt.Println("Error db conn")

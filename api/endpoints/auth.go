@@ -1,8 +1,8 @@
 package endpoints
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"learn/db/redis"
 	"learn/middlewares"
 	"learn/models"
@@ -24,6 +24,7 @@ func AddAuth(eng *gin.Engine) {
 	router.POST("/register", Register)
 	router.POST("/verify", Verify)
 	router.POST("/recend-verification-code", RecendVerificationCode)
+	router.GET("/recovery-codes", middlewares.AuthMiddleware, MakeRecoveryCodes)
 }
 
 // @Schemes	http
@@ -34,19 +35,18 @@ func AddAuth(eng *gin.Engine) {
 // @Success	200		{object}	schemas.AuthResponseSchema
 // @Router		/auth/login [post]
 func Login(ctx *gin.Context) {
-	var LoginData schemas.AuthRequestSchema
-	var user models.User
-	if err := ctx.BindJSON(&LoginData); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"detail": "Invalid request body"})
+	loginData, err := utils.GetRequestBody[schemas.AuthRequestSchema](ctx)
+	if err != nil {
 		return
 	}
+	var user models.User
 	tx := ctx.MustGet("tx").(*gorm.DB)
-	result := tx.Model(&models.User{}).Where("email = ? and is_active", LoginData.Email).First(&user)
+	result := tx.Model(&models.User{}).Where("email = ? and is_active", loginData.Email).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"detail": "User not found"})
 		return
 	}
-	if !utils.CheckPassword(LoginData.Password, user.Password) {
+	if !utils.CheckPassword(loginData.Password, user.Password) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"detail": "Invalid credentials"})
 		return
 	}
@@ -62,10 +62,8 @@ func Login(ctx *gin.Context) {
 // @Success	200		{object}	schemas.AuthVerificationKeySchema
 // @Router		/auth/register [post]
 func Register(ctx *gin.Context) {
-	var newUser models.User
-	if err := ctx.BindJSON(&newUser); err != nil {
-		fmt.Println(err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"detail": "Invalid request body"})
+	newUser, err := utils.GetRequestBody[schemas.UserCreate](ctx)
+	if err != nil {
 		return
 	}
 	tx := ctx.MustGet("tx").(*gorm.DB)
@@ -129,4 +127,26 @@ func RecendVerificationCode(ctx *gin.Context) {
 
 	verification_key, _ := utils.SendVerificationCode(data.Email)
 	ctx.JSON(http.StatusOK, schemas.AuthVerificationKeySchema{VerificationKey: verification_key})
+}
+
+// @Tags		Auth
+// @Success	200	{object}	schemas.AuthVerificationKeySchema
+// @Router		/auth/recovery-codes [get]
+// @Security BearerAuth
+func MakeRecoveryCodes(ctx *gin.Context) {
+	user := ctx.MustGet("user").(*schemas.UserRetrieveSchema)
+	tx := ctx.MustGet("tx").(*gorm.DB)
+
+	codes := utils.GenerateRecoveryCodes()
+	codesJson, _ := json.Marshal(codes)
+
+	recoveryCodes := models.UserRecoveryCodes{
+		UserId: user.Id,
+		Codes:  codesJson,
+	}
+	if err := tx.Save(&recoveryCodes).Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"detail": "Failed to update recovery codes"})
+		return
+	}
+	ctx.JSON(http.StatusOK, codes)
 }

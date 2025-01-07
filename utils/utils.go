@@ -89,3 +89,19 @@ func SendVerificationCode(email string) (verification_key string, verification_c
 	go smtp.SendMail([]string{email}, verification_code, "")
 	return
 }
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%&.?")
+
+func GenerateRecoveryCodes() []string {
+	result := make([]string, settings.Settings.RecoveryCodeCount)
+
+	for i := range settings.Settings.RecoveryCodeCount {
+		b := make([]rune, settings.Settings.RecoveryCodeLength)
+		for j := range b {
+			b[j] = letters[rand.IntN(len(letters))]
+		}
+		result[i] = string(b)
+	}
+
+	return result
+}

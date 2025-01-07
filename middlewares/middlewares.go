@@ -24,18 +24,21 @@ func TransactionMiddleware(ctx *gin.Context) {
 }
 
 func AuthMiddleware(c *gin.Context) {
-	token, err := c.Cookie("token")
-	if err != nil {
+	bearer := c.GetHeader("Authorization")
+	if bearer == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]string{"detail": "Unathorized"})
+		return
 	}
-	verifiedToken, err := utils.VerifyJwt(token)
+	verifiedToken, err := utils.VerifyJwt(bearer[7:])
 	if err != nil {
 		fmt.Println(err)
 		c.AbortWithError(http.StatusUnauthorized, err)
+		return
 	}
 	user, err := verifiedToken.Claims.GetSubject()
 	if err != nil {
 		c.AbortWithError(http.StatusUnauthorized, err)
+		return
 	}
 	var userSchema schemas.UserRetrieveSchema
 	tx, ok := c.MustGet("tx").(*gorm.DB)

@@ -17,4 +17,4 @@ air:
 	- air
 
 swag:
-	- swag init -g api/api.go
+	- swag init

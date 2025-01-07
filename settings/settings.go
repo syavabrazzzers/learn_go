@@ -44,11 +44,13 @@ type SettingsStruct struct {
 	JwtSecret                  string `env:"JWT_SECRET,required"`
 	Debug                      bool   `env:"DEBUG,required"`
 	VerificationCodeExpiration int    `env:"VERIFICATION_CODE_EXP,required"`
+	RecoveryCodeLength         int    `env:"RECOVERY_CODES_LENGTH,required"`
+	RecoveryCodeCount          int    `env:"RECOVERY_CODES_COUNT,required"`
 }
 
 var Settings SettingsStruct
 
-func Init() {
+func init() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("unable to load .env file: %e", err)

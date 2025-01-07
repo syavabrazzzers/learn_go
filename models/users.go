@@ -11,3 +11,9 @@ type User struct {
 	Username string `json:"username" binding:"required"`
 	IsActive bool   `json:"is_active" default:"false"`
 }
+
+type UserRecoveryCodes struct {
+	UserId int    `gorm:"index;primarykey"`
+	User   User   `gorm:"constraint:OnDelete:CASCADE"`
+	Codes  []byte `gorm:"type:jsonb" json:"codes"`
+}
